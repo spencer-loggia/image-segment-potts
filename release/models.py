@@ -44,22 +44,31 @@ class MRF(object):
         self.n_em_iter = n_em_iter
         self.n_vi_iter = n_vi_iter
 
+    def get_neighbors(self, X, row, col):
+        neighbors = []
+        neighbors.append((row-1, col))
+        neighbors.append((row, col+1))
+        neighbors.append((row+1, col))
+        neighbors.append((row, col+1))
+        return neighbors
+
     def gauss(self, d, mu, sigma):
         return (1/(sigma*np.sqrt(2*math.pi))) * np.exp(-1 * 1/2 * ((d - mu) / sigma)**2)
 
-    def KL(self, xs, mu, sigma, q, k) -> int:
+    def KL(self, xs, neighbors, mu, sigma, q, k) -> int:
+        neighbors = neighbors.T
         cur_liklihood = self.gauss(xs, mu[k], sigma[k])
         temp = np.array(q)
-        temp.transpose(2, 1, 0)
-        sum_over_q = self.J * np.sum(temp[k])
+        temp.transpose(2,1,0)
+        sum_over_neighbors = self.J * np.sum(q[k][neighbors[1], neighbors[0]])
 
         sum_over_allk = 0
         for i in range(self.K):
             norm = self.gauss(xs, mu[i], sigma[i])
-            qsum = self.J * np.sum(temp[i])
+            qsum = self.J * np.sum(q[i][neighbors[1], neighbors[0]])
             sum_over_allk += norm * np.exp(qsum)
 
-        kl = (cur_liklihood * np.exp(sum_over_q)) / sum_over_allk
+        kl = (cur_liklihood * np.exp(sum_over_neighbors)) / sum_over_allk
 
         return kl
 
@@ -69,10 +78,11 @@ class MRF(object):
             for i in range(X.shape[0]):
                 for j in range(X.shape[1]):
                     for k in range(self.K):
-                        q[i, j, k] = self.KL(X[i, j], mu, sigma, q, k)
+                        q[i, j, k] = self.KL(X[i, j], self.get_neighbors(X, i, j), mu, sigma, q, k)
         return q
 
     def m_step(self, X, mu, sigma):
+        for k in range(self.K):
 
 
 
