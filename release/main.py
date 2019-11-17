@@ -64,15 +64,16 @@ def train(args):
     
     # Initialize appropriate algorithm
     if args.algorithm == 'mrf':
-        model = models.MRF(J=args.edge_weight, K=args.num_states, n_em_iter=args.n_em_iterations, n_vi_iter=args.n_vi_iterations)
+        try:
+            model = pickle.load(open('./models/image_1_model', 'rb'))
+        except (EOFError, FileNotFoundError, IOError) as e:
+            model = models.MRF(J=args.edge_weight, K=args.num_states, n_em_iter=args.n_em_iterations, n_vi_iter=args.n_vi_iterations)
+            # Train the model
+            model.fit(X=X)
+            # Save the model
+            pickle.dump(model, open(args.model_file, 'wb'))
     else:
         raise Exception("Algorithm argument not recognized")
-
-    # Train the model
-    model.fit(X=X)
-
-    # Save the model
-    pickle.dump(model, open(args.model_file, 'wb'))
 
     # predict most likely latent states for each of the pixels
     preds = model.predict(X)
