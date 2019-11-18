@@ -6,6 +6,7 @@ This file is where you will write most of your code!
 
 import numpy as np
 import math
+import time
 
 np.seterr(all='raise')
 
@@ -72,8 +73,7 @@ class MRF(object):
     def KL(self, xs, neighbors, mu, sigma, q, k) -> int:
         neighbors = np.transpose(neighbors)
         cur_liklihood = self.gauss(xs, mu[k], sigma[k])
-        temp = np.array(q)
-        temp = temp.transpose(2, 1, 0)
+        temp = q.transpose(2, 1, 0)
 
         sum_over_allk = 0
 
@@ -83,24 +83,19 @@ class MRF(object):
             if k == i:
                 this_k_q = qsum
             sum_over_allk += norm * np.exp(qsum)
-
         kl = (cur_liklihood * np.exp(this_k_q)) / sum_over_allk
         return kl
 
     def e_step(self, X, mu, sigma):
         q = initialize_variational_parameters(X.shape[0], X.shape[1], self.K)
-        key = str([q, mu, sigma])
-        if key not in self.E_mem:
-            for m in range(self.n_vi_iter):
-                print('variation inference step ' + str(m))
-                for i in range(X.shape[0]):
-                    print('working on row ' + str(i) + ' of ' + str(X.shape[0]))
-                    for j in range(X.shape[1]):
-                        for k in range(self.K):
-                            q[i, j, k] = self.KL(X[i, j], self.get_neighbors(X, i, j), mu, sigma, q, k)
-            self.E_mem.update({key: q})
-        else:
-            q = self.E_mem[key]
+        for m in range(self.n_vi_iter):
+            for i in range(X.shape[0]):
+                for j in range(X.shape[1]):
+                    neighbors = self.get_neighbors(X, i, j)
+                    for k in range(self.K):
+                        #start_time1 = time.time()
+                        q[i, j, k] = self.KL(X[i, j], neighbors, mu, sigma, q, k)
+                        #print("time elapsed KL : {:.5f}s".format(time.time() - start_time1))
         return q
 
     def m_step(self, X, mu, sigma, q):
@@ -123,7 +118,6 @@ class MRF(object):
         # mean field estimate for this step
         print('Initialized EM')
         for i in range(self.n_em_iter):
-            print('Starting EM step ... ')
             q = self.e_step(X, mean, var)
             mean, var = self.m_step(X, mean, var, q)
             var = np.sqrt(var)

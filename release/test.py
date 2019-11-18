@@ -11,7 +11,7 @@ X = load_image('./data/image_1.jpg')
 np.random.seed(1)
 model = models.MRF(J=1.2, K=4, n_em_iter=3, n_vi_iter=3) #TODO revert to k=4, both iters 3
 model.fit(X=X)
-pickle.dump(model, open('./models/image_1_model', 'wb'))
+pickle.dump(model, open('./models/testing', 'wb'))
 predictions = model.predict(X=X)
 print(predictions)
 

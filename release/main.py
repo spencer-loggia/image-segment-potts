@@ -65,7 +65,7 @@ def train(args):
     # Initialize appropriate algorithm
     if args.algorithm == 'mrf':
         try:
-            model = pickle.load(open('./models/image_1_model', 'rb'))
+            model = pickle.load(open('./models/image_2_model', 'rb'))
         except (EOFError, FileNotFoundError, IOError) as e:
             model = models.MRF(J=args.edge_weight, K=args.num_states, n_em_iter=args.n_em_iterations, n_vi_iter=args.n_vi_iterations)
             # Train the model
@@ -88,7 +88,11 @@ def train(args):
 
 
 if __name__ == "__main__":
-	# Set seed
+    import time
+    start_time = time.time()
+    # Set seed
     ARGS = get_args()
     np.random.seed(ARGS.random_seed)
     train(ARGS)
+    print("time elapsed: {:.2f}s".format(time.time() - start_time))
+
